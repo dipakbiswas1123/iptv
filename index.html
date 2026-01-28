@@ -1,1 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>My IPTV</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
+<style>
+*{box-sizing:border-box}
+
+
+
+body{
+  margin:0;
+  font-family:Segoe UI,Arial;
+  background:#0b0b0b;
+  color:#fff;
+
+}
+
+/* ================= MOBILE FIRST ================= */
+.app{
+  display:flex;
+  flex-direction:column;
+}
+
+/* ================= PLAYER ================= */
+.player-wrapper{
+  width:100%;
+  padding:10px;
+}
+
+.player-box{
+  width:100%;
+  aspect-ratio:16/9;
+  background:#000;
+  border-radius:14px;
+  overflow:hidden;
+  box-shadow:0 15px 40px rgba(0,0,0,.7);
+}
+
+video{
+  width:100%;
+  height:100%;
+  background:#000;
+}
+
+/* ================= CHANNEL LIST ================= */
+.channels{
+  padding:10px;
+}
+
+.channels h3{
+  text-align:center;
+  background:#fff;
+  color:#000;
+  padding:10px;
+  border-radius:6px;
+  margin:10px 0;
+  font-weight:600;
+}
+
+.channel-list{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+}
+
+.channel{
+  background:#1f1f1f;
+  border-radius:10px;
+  padding:12px;
+  text-align:center;
+  cursor:pointer;
+  transition:.25s;
+}
+
+.channel:hover,
+.channel.active{
+  background:#ff8800;
+  color:#000;
+}
+
+.channel img{
+  width:70px;
+  height:70px;
+  object-fit:contain;
+  margin-bottom:6px;
+}
+
+/* ================= DESKTOP ONLY ================= */
+@media(min-width:1024px){
+
+  .app{
+    flex-direction:row;
+    height:100vh;
+  }
+
+  .player-wrapper{
+    width:74%;
+  }
+
+  .channels{
+    width:26%;
+    overflow-y:auto;
+    border-left:1px solid #222;
+  }
+
+  .channel-list{
+    grid-template-columns:1fr;
+  }
+
+  .channel{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    text-align:left;
+  }
+
+  .channel img{
+    width:45px;
+    height:45px;
+    margin:0;
+
+
+
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <!-- ===== PLAYER (TOP ON MOBILE) ===== -->
+  <div class="player-wrapper">
+    <div class="player-box">
+      <video id="video" controls autoplay muted playsinline></video>
+    </div>
+  </div>
+
+  <!-- ===== CHANNEL LIST (UNDER PLAYER ON MOBILE) ===== -->
+  <div class="channels">
+    <h3>channels</h3>
+
+<h3 class="live-title">
+  <div class="marquee">
+    <span>🔴 আপনার ইন্টারনেট বিল নিয়মিত পরিশোধ করুন , সংযোগ সচল রাখুন 🔴</span>
+  </div>
+</h3>
+
+
+    <div class="channel-list">
+
+
+      <div class="channel active"
+        onclick="play(this,'http://103.99.249.139/zeecinema/index.m3u8')">
+        <img src="tv_logo/zcinema.png">
+        Zee Cinema
+      </div>
+	  
+	  <div class="channel"
+        onclick="play(this,'https://ekusheyserver.com/hls-live/livepkgr/_definst_/liveevent/livestream3.m3u8')">
+        <img src="tv_logo/ekushey.png">
+        Ekushey TV
+      </div>
+
+      <div class="channel"
+        onclick="play(this,'http://103.230.105.252:1935/live/btv/chunklist_w524649012.m3u8')">
+        <img src="tv_logo/btv.png">
+        BTV
+      </div>
+
+      <div class="channel"
+        onclick="play(this,'https://ndtvindiaelemarchana.akamaized.net/hls/live/2003679/ndtvindia/master.m3u8')">
+        <img src="tv_logo/ndtv.png">
+        NDTV
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+const video = document.getElementById("video");
+let hls = null;
+
+function play(el, url){
+
+  document.querySelectorAll('.channel')
+    .forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+
+  // destroy old hls
+  if(hls){
+    hls.destroy();
+    hls = null;
+  }
+
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+
+  // Safari (iPhone)
+  if(video.canPlayType('application/vnd.apple.mpegurl')){
+    video.src = url;
+    video.muted = false;
+    video.play().catch(()=>{});
+  }
+  // Chrome / Android / PC
+  else if(Hls.isSupported()){
+    hls = new Hls({
+      liveSyncDuration: 3,
+      maxBufferLength: 30
+    });
+
+    hls.loadSource(url);
+    hls.attachMedia(video);
+
+    hls.on(Hls.Events.MANIFEST_PARSED, function () {
+      video.muted = false;
+      video.play().catch(()=>{});
+    });
+
+    hls.on(Hls.Events.ERROR, function (event, data) {
+      console.log("HLS error:", data);
+    });
+  }
+  else{
+    alert("Your browser does not support HLS playback");
+  }
+}
+
+window.addEventListener("load", function () {
+  const firstChannel = document.querySelector(".channel");
+  if (firstChannel) {
+    firstChannel.click();   // 🔥 auto play first channel
+  }
+});
+
+</script>
+
+
+</body>
+</html>
